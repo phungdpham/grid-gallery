@@ -3,82 +3,87 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  Link,
+  useLocation,
 } from "react-router-dom";
+import styled, { css } from "styled-components";
+import { Modal } from "./Modal/Modal";
+import { Gallery } from "./Gallery/Gallery";
 
-// This site has 3 pages, all of which are rendered
-// dynamically in the browser (not server rendered).
+// This example shows how to render two different screens
+// (or the same screen in a different context) at the same URL,
+// depending on how you got there.
 //
-// Although the page does not ever refresh, notice how
-// React Router keeps the URL up to date as you navigate
-// through the site. This preserves the browser history,
-// making sure things like the back button and bookmarks
-// work properly.
+// Click the "featured images" and see them full screen. Then
+// "visit the gallery" and click on the colors. Note the URL and
+// the component are the same as before but now we see them
+// inside a modal on top of the gallery screen.
 
-export default function BasicExample() {
+export default function ModalGalleryExample() {
   return (
     <Router>
-      <div>
-        <ul>
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/about">About</Link>
-          </li>
-          <li>
-            <Link to="/dashboard">Dashboard</Link>
-          </li>
-        </ul>
-
-        <hr />
-
-        {/*
-          A <Switch> looks through all its children <Route>
-          elements and renders the first one whose path
-          matches the current URL. Use a <Switch> any time
-          you have multiple routes, but you want only one
-          of them to render at a time
-        */}
-        <Switch>
-          <Route exact path="/">
-            <Home />
-          </Route>
-          <Route path="/about">
-            <About />
-          </Route>
-          <Route path="/dashboard">
-            <Dashboard />
-          </Route>
-        </Switch>
-      </div>
+      <ModalSwitch />
     </Router>
   );
 }
 
-// You can think of these components as "pages"
-// in your app.
+function ModalSwitch() {
+  let location = useLocation();
+
+  // This piece of state is set when one of the
+  // gallery links is clicked. The `background` state
+  // is the location that we were at when one of
+  // the gallery links was clicked. If it's there,
+  // use it as the location for the <Switch> so
+  // we show the gallery in the background, behind
+  // the modal.
+  let background = location.state && location.state.background;
+
+  return (
+    <div>
+      <Switch location={background || location}>
+        <Route exact path="/" children={<Home />} />
+        <Route path="/gallery" children={<Gallery />} />
+        <Route path="/img/:id" children={<Modal />} />
+      </Switch>
+
+      {/* Show the modal when a background page is set */}
+      {background && <Route path="/img/:id" children={<Modal />} />}
+    </div>
+  );
+}
+
+export const Image = styled.div`
+  width: 305px;
+  height: 305px;
+  @media (max-width: 990px) {
+    width: 100%;
+  }
+  background: no-repeat center/150% url(/img/${({ index }) => index}.jpeg);
+  ${({ inModal }) =>
+    !inModal &&
+    css`
+      :hover {
+        opacity: 0.7;
+      }
+    `}
+`;
 
 function Home() {
   return (
     <div>
-      <h2>Home</h2>
+      <Link to="/gallery">Visit the Gallery</Link>
+      <h2>Featured Images</h2>
+      <ul>
+        <li>
+          <Link to="/img/2">Tomato</Link>
+        </li>
+        <li>
+          <Link to="/img/4">Crimson</Link>
+        </li>
+      </ul>
     </div>
   );
 }
 
-function About() {
-  return (
-    <div>
-      <h2>About</h2>
-    </div>
-  );
-}
 
-function Dashboard() {
-  return (
-    <div>
-      <h2>Dashboard</h2>
-    </div>
-  );
-}
